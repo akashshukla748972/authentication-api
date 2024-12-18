@@ -55,6 +55,14 @@ app.get("/", (req, res) => {
   });
 });
 
+app.get("*", (req, res) => {
+  res.status(404).json({
+    message: "Not found",
+    success: true,
+    error: false,
+  });
+});
+
 app.post("/create", async (req, res) => {
   const { name, password } = req.body;
   // Validate input
@@ -134,7 +142,7 @@ app.post("/login", async (req, res) => {
     }
 
     const token = jwt.sign({ name: name }, process.env.JWT_TOKEN, {
-      expiresIn: "1m",
+      expiresIn: "1h",
     });
 
     res.status(200).json({
