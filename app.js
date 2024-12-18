@@ -55,14 +55,6 @@ app.get("/", (req, res) => {
   });
 });
 
-app.use("*", (req, res) => {
-  res.status(404).json({
-    message: "Not found",
-    success: true,
-    error: false,
-  });
-});
-
 app.post("/create", async (req, res) => {
   const { name, password } = req.body;
   // Validate input
@@ -159,6 +151,15 @@ app.post("/login", async (req, res) => {
       error: true,
     });
   }
+});
+
+// 404 handler must be at the end
+app.use("*", (req, res) => {
+  res.status(404).json({
+    message: "Not found",
+    success: false,
+    error: true,
+  });
 });
 
 // Start Server
