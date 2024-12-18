@@ -5,6 +5,7 @@ import bcrypt from "bcryptjs";
 import helmet from "helmet";
 import morgan from "morgan";
 import cors from "cors";
+import jwt from "jsonwebtoken";
 
 dotenv.config(); // Load environment variables
 const app = express();
@@ -56,7 +57,6 @@ app.get("/", (req, res) => {
 
 app.post("/create", async (req, res) => {
   const { name, password } = req.body;
-  console.log(name, password);
   // Validate input
   if (!name || !password) {
     return res.status(400).json({
@@ -70,7 +70,7 @@ app.post("/create", async (req, res) => {
     // Check if user already exists
     const existingUser = await User.findOne({ name });
     if (existingUser) {
-      return res.status(400).json({
+      return res.status(409).json({
         message: "User already exists",
         success: false,
         error: true,
@@ -90,6 +90,61 @@ app.post("/create", async (req, res) => {
     });
   } catch (error) {
     console.error("Error creating user:", error.message);
+    res.status(500).json({
+      message: "Internal server error",
+      success: false,
+      error: true,
+    });
+  }
+});
+
+app.post("/login", async (req, res) => {
+  const { name, password } = req.body;
+
+  if (!name || !password) {
+    res.status(400).json({
+      message: "All fields required",
+      success: false,
+      error: true,
+    });
+    return;
+  }
+
+  try {
+    // check user exist
+    const isExist = await User.findOne({ name });
+    if (!isExist) {
+      res.status(400).json({
+        message: "User or Password not exist",
+        success: false,
+        error: true,
+      });
+      return;
+    }
+
+    // Compaire password
+    const isEqual = await bcrypt.compare(password, isExist.password);
+    if (!isEqual) {
+      res.status(400).json({
+        message: "All fields required",
+        success: false,
+        error: true,
+      });
+      return;
+    }
+
+    const token = jwt.sign({ name: name }, process.env.JWT_TOKEN, {
+      expiresIn: "1m",
+    });
+
+    res.status(200).json({
+      message: "Successfully Loged in",
+      token: token,
+      success: true,
+      error: false,
+    });
+  } catch (error) {
+    console.log("Error", error.message);
     res.status(500).json({
       message: "Internal server error",
       success: false,
